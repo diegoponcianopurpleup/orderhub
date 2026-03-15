@@ -1,19 +1,31 @@
-﻿export async function PUT(req: NextRequest, context: any) {
-  try {
-    const session = requireApiSession(req)
+﻿export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-    const id = context.params.id
-    const body = await req.json()
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function PUT(req: any, context: any) {
+  try {
+    const id = context.params.id;
+    const body = await req.json();
 
     const addon = await prisma.addon.update({
       where: { id },
-      data: body
-    })
+      data: {
+        name: body.name,
+        price: body.price,
+        active: body.active
+      }
+    });
 
-    return NextResponse.json(addon)
+    return NextResponse.json(addon);
 
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: "Erro ao atualizar addon" }, { status: 500 })
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Erro ao atualizar addon" },
+      { status: 500 }
+    );
   }
 }

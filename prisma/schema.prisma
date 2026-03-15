@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  name           String
+  logoUrl        String?
+  primaryColor   String         @default("#6b2fa3")
+  secondaryColor String         @default("#8e44cd")
+  phone          String?
+  address        String?
+  businessType   String?
+  slogan         String?
+  currency       String         @default("BRL")
+  darkMode       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  addons         Addon[]
+  categories     Category[]
+  customers      Customer[]
+  invoices       Invoice[]
+  orders         Order[]
+  products       Product[]
+  subscriptions  Subscription[]
+  users          User[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String
+  name         String
+  passwordHash String
+  role         UserRole @default(ADMIN)
+  isActive     Boolean  @default(true)
+  companyId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, email])
+  @@index([companyId])
+}
+
+model PlatformUser {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  role         PlatformRole @default(SUPER_ADMIN)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Plan {
+  id                String         @id @default(cuid())
+  code              String         @unique
+  name              String
+  description       String?
+  interval          PlanInterval   @default(MONTHLY)
+  price             Decimal
+  isActive          Boolean        @default(true)
+  maxUsers          Int?
+  maxOrdersPerMonth Int?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  invoices          Invoice[]
+  subscriptions     Subscription[]
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  companyId          String
+  planId             String
+  status             SubscriptionStatus @default(TRIALING)
+  trialEndsAt        DateTime?
+  startsAt           DateTime           @default(now())
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  canceledAt         DateTime?
+  externalRef        String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan               Plan               @relation(fields: [planId], references: [id])
+
+  @@index([companyId, status])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  companyId   String
+  planId      String?
+  amount      Decimal
+  currency    String        @default("BRL")
+  status      InvoiceStatus @default(PENDING)
+  dueDate     DateTime?
+  paidAt      DateTime?
+  externalRef String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan        Plan?         @relation(fields: [planId], references: [id])
+
+  @@index([companyId, status])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  isActive  Boolean   @default(true)
+  position  Int       @default(0)
+  companyId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@index([companyId])
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  price       Decimal
+  isActive    Boolean        @default(true)
+  outOfStock  Boolean        @default(false)
+  position    Int            @default(0)
+  companyId   String
+  categoryId  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  orderItems  OrderItem[]
+  category    Category?      @relation(fields: [categoryId], references: [id])
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  addons      ProductAddon[]
+
+  @@index([companyId])
+  @@index([companyId, categoryId])
+}
+
+model Addon {
+  id         String           @id @default(cuid())
+  name       String
+  price      Decimal
+  isActive   Boolean          @default(true)
+  outOfStock Boolean          @default(false)
+  companyId  String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  itemAddons OrderItemAddon[]
+  products   ProductAddon[]
+
+  @@index([companyId])
+}
+
+model ProductAddon {
+  productId String
+  addonId   String
+  addon     Addon   @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([productId, addonId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  notes     String?
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([companyId])
+}
+
+model Order {
+  id          String         @id @default(cuid())
+  companyId   String
+  customerId  String?
+  code        String
+  orderType   OrderType      @default(COUNTER)
+  status      OrderStatus    @default(OPEN)
+  prepStatus  PrepStatus     @default(NEW)
+  notes       String?
+  tableNumber String?
+  discount    Decimal        @default(0)
+  subtotal    Decimal        @default(0)
+  total       Decimal        @default(0)
+  canceledAt  DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer    Customer?      @relation(fields: [customerId], references: [id])
+  items       OrderItem[]
+  payments    PaymentSplit[]
+
+  @@index([companyId, status])
+  @@index([companyId, prepStatus])
+  @@index([companyId, createdAt])
+}
+
+model OrderItem {
+  id          String           @id @default(cuid())
+  orderId     String
+  productId   String?
+  productName String
+  unitPrice   Decimal
+  quantity    Int              @default(1)
+  subtotal    Decimal
+  createdAt   DateTime         @default(now())
+  order       Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product?         @relation(fields: [productId], references: [id])
+  addons      OrderItemAddon[]
+
+  @@index([orderId])
+}
+
+model OrderItemAddon {
+  id          String    @id @default(cuid())
+  orderItemId String
+  addonId     String?
+  addonName   String
+  unitPrice   Decimal
+  quantity    Int       @default(1)
+  subtotal    Decimal
+  addon       Addon?    @relation(fields: [addonId], references: [id])
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([orderItemId])
+}
+
+model PaymentSplit {
+  id        String        @id @default(cuid())
+  orderId   String
+  method    PaymentMethod
+  amount    Decimal
+  createdAt DateTime      @default(now())
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  ATTENDANT
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  SUPPORT
+}
+
+enum OrderType {
+  COUNTER
+  PICKUP
+  DELIVERY
+  TABLE
+}
+
+enum OrderStatus {
+  OPEN
+  COMPLETED
+  CANCELED
+}
+
+enum PrepStatus {
+  NEW
+  PREPARING
+  READY
+  DELIVERED
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+  CARD
+  OTHER
+}
+
+enum PlanInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELED
+}

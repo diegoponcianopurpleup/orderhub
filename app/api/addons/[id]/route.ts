@@ -1,14 +1,14 @@
 ﻿export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function PUT(...args: any[]) {
   try {
+    const req = args[0];
+    const context = args[1];
+
     const id = context.params.id;
     const body = await req.json();
 
@@ -17,12 +17,11 @@ export async function PUT(
       data: {
         name: body.name,
         price: body.price,
-        active: body.active
-      }
+        active: body.active,
+      },
     });
 
     return NextResponse.json(addon);
-
   } catch (error) {
     console.error(error);
 

@@ -1,60 +1,33 @@
 ﻿export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword } from "@/lib/password";
-import { createSessionToken, getSessionCookieName } from "@/lib/session";
 
-export async function POST(req: Request) {
+export async function PUT(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
+    const id = context.params.id;
     const body = await req.json();
 
-    const email = String(body.email || "").toLowerCase().trim();
-    const password = String(body.password || "");
-
-    const user = await prisma.user.findFirst({
-      where: { email }
+    const addon = await prisma.addon.update({
+      where: { id },
+      data: {
+        name: body.name,
+        price: body.price,
+        active: body.active
+      }
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "user_not_found" },
-        { status: 404 }
-      );
-    }
-
-    const passwordValid = verifyPassword(password, user.passwordHash);
-
-    if (!passwordValid) {
-      return NextResponse.json(
-        { error: "invalid_password" },
-        { status: 401 }
-      );
-    }
-
-    const token = createSessionToken({
-      userId: user.id,
-      companyId: user.companyId,
-      role: user.role,
-      name: user.name,
-      email: user.email
-    });
-
-    const response = NextResponse.json({ ok: true });
-
-    response.cookies.set(getSessionCookieName(), token, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 12,
-      secure: process.env.NODE_ENV === "production"
-    });
-
-    return response;
+    return NextResponse.json(addon);
 
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
-      { error: "internal_error" },
+      { error: "Erro ao atualizar addon" },
       { status: 500 }
     );
   }

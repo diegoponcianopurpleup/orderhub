@@ -17,11 +17,12 @@ export async function PUT(...args: any[]) {
       data: {
         name: body.name,
         price: body.price,
-        active: body.active,
-      },
+        isActive: body.active
+      }
     });
 
     return NextResponse.json(addon);
+
   } catch (error) {
     console.error(error);
 

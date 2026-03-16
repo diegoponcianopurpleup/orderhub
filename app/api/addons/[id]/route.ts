@@ -4,20 +4,19 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PUT(...args: any[]) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const req = args[0];
-    const context = args[1];
-
-    const id = context.params.id;
     const body = await req.json();
 
     const addon = await prisma.addon.update({
-      where: { id },
+      where: { id: params.id },
       data: {
         name: body.name,
         price: body.price,
-        isActive: body.active
+        isActive: body.isActive
       }
     });
 

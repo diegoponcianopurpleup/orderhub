@@ -1,13 +1,15 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PUT(req: NextRequest, context: any) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const id = context.params.id;
     const body = await req.json();
 
     const addon = await prisma.addon.update({
-      where: { id },
+      where: { id: params.id },
       data: {
         name: body.name,
         price: body.price,

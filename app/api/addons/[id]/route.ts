@@ -6,13 +6,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
+    const { id } = context.params;
     const body = await req.json();
 
     const addon = await prisma.addon.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         price: body.price,

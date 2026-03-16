@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
 
     const addon = await prisma.addon.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         price: body.price,

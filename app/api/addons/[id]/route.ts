@@ -6,10 +6,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await params;
     const body = await req.json();
 
     const addon = await prisma.addon.update({
@@ -17,12 +17,11 @@ export async function PUT(
       data: {
         name: body.name,
         price: body.price,
-        isActive: body.isActive
-      }
+        isActive: body.isActive,
+      },
     });
 
     return NextResponse.json(addon);
-
   } catch (error) {
     console.error(error);
 

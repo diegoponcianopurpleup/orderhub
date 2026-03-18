@@ -4,7 +4,7 @@ import { requireApiSession } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = requireApiSession(req);
+    const session = await requireApiSession(req);
     const products = await prisma.product.findMany({
       where: { companyId: session.companyId },
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = requireApiSession(req);
+    const session = await requireApiSession(req);
     const body = await req.json();
 
     const product = await prisma.product.create({

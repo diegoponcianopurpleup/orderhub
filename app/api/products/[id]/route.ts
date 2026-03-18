@@ -4,7 +4,7 @@ import { requireApiSession } from "@/lib/api-auth";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = requireApiSession(req);
+    const session = await requireApiSession(req);
     const { id } = await params;
     const body = await req.json();
 
@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = requireApiSession(req);
+    const session = await requireApiSession(req);
     const { id } = await params;
 
     const existing = await prisma.product.findFirst({ where: { id, companyId: session.companyId } });

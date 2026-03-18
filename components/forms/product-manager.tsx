@@ -30,22 +30,35 @@ export function ProductManager({ initialProducts, categories }: Props) {
     );
   }
 
-  async function createProduct(e: FormEvent) {
-    e.preventDefault();
-    await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        categoryId: form.categoryId || null,
-        isActive: true,
-        outOfStock: false
-      })
-    });
+ async function createProduct(e: FormEvent) {
+  e.preventDefault();
 
-    setForm({ name: "", description: "", imageUrl: "", price: 0, categoryId: "", position: 0 });
-    await refresh();
-  }
+  const response = await fetch("/api/products", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...form,
+      categoryId: form.categoryId || null,
+      isActive: true,
+      outOfStock: false
+    })
+  });
+
+  const text = await response.text();
+
+  alert(STATUS: ${response.status}\n${text});
+
+  setForm({
+    name: "",
+    description: "",
+    imageUrl: "",
+    price: 0,
+    categoryId: "",
+    position: 0
+  });
+
+  await refresh();
+}
 
   async function editProduct(product: Product) {
     const name = window.prompt("Nome", product.name);
